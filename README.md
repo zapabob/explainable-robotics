@@ -10,7 +10,7 @@ ExplainableRoboticsは、生物学的に妥当な神経ネットワークモデ�
 - BioKANとの統合による生物学的妥当性の向上
 - Genesisロボティクスシミュレーションとの連携
 - アセチルコリン、ドーパミン、セロトニン、ノルアドレナリン、グルタミン酸、GABAなどの神経伝達物質レベルの調整
-- さまざまな中枢神経系薬物の効果のシミュレーションtu
+- さまざまな中枢神経系薬物の効果のシミュレーション
 - 自然言語でモデルの意思決定を説明する機能
 - マルチモーダルLLMとの統合による拡張された説明生成
 
@@ -18,15 +18,15 @@ ExplainableRoboticsは、生物学的に妥当な神経ネットワークモデ�
 
 ### 前提条件
 
-- Python 3.7以上
+- Python 3.12以上
 - PyTorch 1.8以上
-- Genesisロボティクスライブラリ
+- Genesis-world
 
 ### インストール手順
 
 ```bash
 # リポジトリのクローン
-git clone https://github.com/yourusername/explainable_robotics.git
+git clone https://github.com/zapabob/explainable_robotics.git
 cd explainable_robotics
 
 # 依存関係のインストール
@@ -286,9 +286,9 @@ llm.explain_decision(sensor_data, motor_output, layer_activations, nt_levels)  #
 
 ```
 @software{explainable_robotics,
-  author = {Explainable Robotics Team},
+  author = {Ryo Minegishi},
   title = {ExplainableRobotics: A Biologically Plausible Framework for Humanoid Robot Control},
   year = {2025},
-  url = {https://github.com/yourusername/explainable_robotics}
+  url = {https://github.com/zapabob/explainable_robotics}
 }
 ``` 
