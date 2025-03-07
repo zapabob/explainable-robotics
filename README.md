@@ -2,7 +2,7 @@
 
 神経科学的に妥当なヒューマノイドロボット制御のための説明可能AIフレームワーク
 
-[![Python Tests](https://github.com/yourusername/explainable-robotics/actions/workflows/python-tests.yml/badge.svg)](https://github.com/yourusername/explainable-robotics/actions/workflows/python-tests.yml)
+[![Python Tests](https://github.com/zapabob/explainable-robotics/actions/workflows/python-tests.yml/badge.svg)](https://github.com/zapabob/explainable-robotics/actions/workflows/python-tests.yml)
 [![PyPI version](https://badge.fury.io/py/explainable-robotics.svg)](https://badge.fury.io/py/explainable-robotics)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -85,7 +85,7 @@ system.adjust_neurotransmitter_levels({
 
 ## ドキュメント
 
-詳細なドキュメントは[こちら](https://yourusername.github.io/explainable-robotics)を参照してください。
+詳細なドキュメントは[こちら](https://zapabob.github.io/explainable-robotics)を参照してください。
 
 ## 貢献方法
 
