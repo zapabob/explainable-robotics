@@ -144,7 +144,7 @@ class ExplanationDashboard:
                 {
                     'value': motor.tolist() if isinstance(motor, np.ndarray) else motor,
                     'explanation': exp,
-                    'context': {'neurotransmitter_levels': nt} if i < len(self.nt_history) else {}
+                    'context': {'neurotransmitter_levels': self.nt_history[i]} if i < len(self.nt_history) else {}
                 }
                 for i, (motor, exp) in enumerate(zip(self.motor_history, self.explanation_history))
             ]
@@ -238,7 +238,7 @@ class ExplanationDashboard:
             {
                 'value': motor.tolist() if isinstance(motor, np.ndarray) else motor,
                 'explanation': exp,
-                'context': {'neurotransmitter_levels': nt} if i < len(self.nt_history) else {}
+                'context': {'neurotransmitter_levels': self.nt_history[i]} if i < len(self.nt_history) else {}
             }
             for i, (motor, exp) in enumerate(zip(self.motor_history, self.explanation_history))
         ]
@@ -327,7 +327,7 @@ class ExplanationDashboard:
             {
                 'value': motor.tolist() if isinstance(motor, np.ndarray) else motor,
                 'explanation': exp,
-                'context': {'neurotransmitter_levels': nt} if i < len(self.nt_history) else {}
+                'context': {'neurotransmitter_levels': self.nt_history[i]} if i < len(self.nt_history) else {}
             }
             for i, (motor, exp) in enumerate(zip(self.motor_history, self.explanation_history))
         ]
