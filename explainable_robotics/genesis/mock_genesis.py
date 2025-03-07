@@ -10,10 +10,12 @@ from typing import Dict, Any, List, Optional, Tuple
 import sys
 import types
 
+# 基本クラスの定義
 class Scene:
     """シーンのモッククラス"""
     
     def __init__(self):
+        """シーンの初期化"""
         self.models = []
         self.window_width = 800
         self.window_height = 600
@@ -55,10 +57,12 @@ class Scene:
         """シーンの停止"""
         print("モックシーンを停止")
 
+
 class Camera:
     """カメラのモッククラス"""
     
     def __init__(self):
+        """カメラの初期化"""
         self.position = [0, 0, 5]
         self.target = [0, 0, 0]
         self.up = [0, 1, 0]
@@ -95,10 +99,12 @@ class Camera:
         self.forward = forward
         self.up = up
 
+
 class Model:
     """モデルのモッククラス"""
     
     def __init__(self):
+        """モデルの初期化"""
         self.position = [0, 0, 0]
         self.rotation = [0, 0, 0]
         self.joints = 20
@@ -131,10 +137,12 @@ class Model:
         print("ヒューマノイドモデルを作成")
         return cls()
 
+
 class UI:
     """UIのモッククラス"""
     
     def __init__(self):
+        """UIの初期化"""
         self.panels = {}
         self.elements = {}
     
@@ -178,10 +186,12 @@ class UI:
         if element_id in self.elements:
             self.elements[element_id]["value"] = text
 
+
 class Physics:
     """物理エンジンのモッククラス"""
     
     def __init__(self):
+        """物理エンジンの初期化"""
         self.gravity = [0, -9.81, 0]
         self.time_step = 0.01
     
@@ -193,10 +203,12 @@ class Physics:
         """物理シミュレーションの1ステップ"""
         pass
 
+
 class Environment:
     """環境のモッククラス"""
     
     def __init__(self, **kwargs):
+        """環境の初期化"""
         self.gravity = kwargs.get("gravity", [0, 0, -9.81])
         self.ground = kwargs.get("ground", True)
         self.sky = kwargs.get("sky", True)
@@ -217,10 +229,12 @@ class Environment:
         """環境を閉じる"""
         pass
 
+
 class HumanoidRobot:
     """ヒューマノイドロボットのモッククラス"""
     
     def __init__(self, **kwargs):
+        """ヒューマノイドロボットの初期化"""
         self.height = kwargs.get("height", 1.7)
         self.mass = kwargs.get("mass", 70.0)
         self.joint_limits = kwargs.get("joint_limits", {})
@@ -247,10 +261,12 @@ class HumanoidRobot:
         # 実際のシミュレーションでは物理エンジンによる更新が行われる
         pass
 
+
 class Viewer:
     """可視化ビューワーのモッククラス"""
     
     def __init__(self, env):
+        """ビューワーの初期化"""
         self.env = env
         self.camera_position = [3, 3, 2]
         self.camera_target = [0, 0, 1]
@@ -281,10 +297,12 @@ class Viewer:
         """ビューワーを閉じる"""
         pass
 
+
 class NeurotransmitterSystem:
     """神経伝達物質システムのモッククラス"""
     
     def __init__(self):
+        """神経伝達物質システムの初期化"""
         self.levels = {
             'dopamine': 0.5,
             'serotonin': 0.5,
@@ -303,9 +321,10 @@ class NeurotransmitterSystem:
         """神経伝達物質レベルの取得"""
         return self.levels.get(transmitter_type, 0.5)
 
+
 # ===== モジュール構造を正しく設定 =====
 
-# まず、gsとgensis両方のモジュールを作成
+# まず、gsとgensisの両方のモジュールを作成
 gs = types.ModuleType('genesis')
 sys.modules['genesis'] = gs
 

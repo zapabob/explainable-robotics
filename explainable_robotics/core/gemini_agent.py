@@ -19,16 +19,41 @@ except ImportError:
     GEMINI_AVAILABLE = False
     print("WARNING: Google Generative AIライブラリが利用できません。モックモードで実行します。")
 
-# ベクトル埋め込みとメモリのためのライブラリ
+# ベクトル埋め込みとメモリのためのライブラリ - 個別にインポート
+LANGCHAIN_AVAILABLE = False
+EMBEDDINGS_AVAILABLE = False
+VECTORSTORE_AVAILABLE = False
+MEMORY_AVAILABLE = False
+
 try:
     import langchain
-    from langchain.embeddings import VertexAIEmbeddings
-    from langchain.vectorstores import Chroma
-    from langchain.memory import ConversationBufferMemory
-    from langchain.schema import Document
     LANGCHAIN_AVAILABLE = True
+    
+    # 個別のコンポーネントを別々にimportしてエラーを分離
+    try:
+        from langchain.embeddings import VertexAIEmbeddings
+        EMBEDDINGS_AVAILABLE = True
+    except (ImportError, TypeError) as e:
+        print(f"WARNING: Langchain埋め込み機能をインポートできません: {e}")
+    
+    try:
+        from langchain.vectorstores import Chroma
+        VECTORSTORE_AVAILABLE = True
+    except (ImportError, TypeError) as e:
+        print(f"WARNING: Langchainベクトルストアをインポートできません: {e}")
+    
+    try:
+        from langchain.memory import ConversationBufferMemory
+        MEMORY_AVAILABLE = True
+    except (ImportError, TypeError) as e:
+        print(f"WARNING: Langchainメモリ機能をインポートできません: {e}")
+        
+    try:
+        from langchain.schema import Document
+    except (ImportError, TypeError) as e:
+        print(f"WARNING: Langchainスキーマをインポートできません: {e}")
+        
 except ImportError:
-    LANGCHAIN_AVAILABLE = False
     print("WARNING: Langchainライブラリが利用できません。メモリと埋め込み機能は無効化されます。")
 
 # ローカルの依存関係
@@ -191,6 +216,7 @@ class GeminiAgent:
         self.vector_store = None
         
         if not self.use_memory:
+            logger.info("メモリ機能は設定で無効化されています")
             return
         
         if not LANGCHAIN_AVAILABLE:
@@ -199,27 +225,38 @@ class GeminiAgent:
         
         try:
             # 会話メモリの初期化
-            self.memory = ConversationBufferMemory(
-                memory_key="chat_history",
-                return_messages=True,
-                max_token_limit=self.memory_size * 1000  # 概算
-            )
+            if MEMORY_AVAILABLE:
+                self.memory = ConversationBufferMemory(
+                    memory_key="chat_history",
+                    return_messages=True,
+                    max_token_limit=self.memory_size * 1000  # 概算
+                )
+                logger.info("会話メモリを初期化しました")
+            else:
+                logger.warning("ConversationBufferMemoryが利用できません")
             
             # ベクトルストアの初期化
-            if self.memory_path:
+            if self.memory_path and EMBEDDINGS_AVAILABLE and VECTORSTORE_AVAILABLE:
                 os.makedirs(self.memory_path, exist_ok=True)
                 
-                # ベクトル埋め込みの初期化
-                embeddings = VertexAIEmbeddings()
-                
-                # ベクトルストアの初期化
-                self.vector_store = Chroma(
-                    collection_name="robot_memory",
-                    embedding_function=embeddings,
-                    persist_directory=self.memory_path
-                )
-                
-                logger.info(f"メモリを初期化しました（保存先: {self.memory_path}）")
+                try:
+                    # ベクトル埋め込みの初期化
+                    embeddings = VertexAIEmbeddings()
+                    
+                    # ベクトルストアの初期化
+                    self.vector_store = Chroma(
+                        collection_name="robot_memory",
+                        embedding_function=embeddings,
+                        persist_directory=self.memory_path
+                    )
+                    
+                    logger.info(f"ベクトルストアを初期化しました（保存先: {self.memory_path}）")
+                except Exception as e:
+                    logger.error(f"ベクトルストアの初期化に失敗しました: {e}")
+            elif not EMBEDDINGS_AVAILABLE:
+                logger.warning("VertexAIEmbeddingsが利用できないため、ベクトルストア機能は無効化されます")
+            elif not VECTORSTORE_AVAILABLE:
+                logger.warning("Chromaが利用できないため、ベクトルストア機能は無効化されます")
             
         except Exception as e:
             logger.error(f"メモリの初期化に失敗しました: {e}")
@@ -373,7 +410,16 @@ class GeminiAgent:
         Returns:
             関連するメモリのリスト
         """
-        if not self.use_memory or not self.vector_store:
+        # メモリ機能やベクトルストアが利用できない場合は空リストを返す
+        if not self.use_memory:
+            return []
+        
+        if not LANGCHAIN_AVAILABLE or not VECTORSTORE_AVAILABLE:
+            logger.debug("Langchainまたはベクトルストア機能が利用できないため、メモリ検索をスキップします")
+            return []
+            
+        if not self.vector_store:
+            logger.debug("ベクトルストアが初期化されていないため、メモリ検索をスキップします")
             return []
         
         try:
@@ -444,44 +490,64 @@ class GeminiAgent:
         """
         if not self.use_memory:
             return
+            
+        if not LANGCHAIN_AVAILABLE:
+            logger.debug("Langchainが利用できないため、メモリへの保存をスキップします")
+            return
         
         try:
             # 会話メモリへの保存
-            if self.memory:
-                self.memory.save_context(
-                    {"input": json.dumps(input_data, ensure_ascii=False)},
-                    {"output": json.dumps(result, ensure_ascii=False)}
-                )
+            if self.memory and MEMORY_AVAILABLE:
+                try:
+                    self.memory.save_context(
+                        {"input": json.dumps(input_data, ensure_ascii=False)},
+                        {"output": json.dumps(result, ensure_ascii=False)}
+                    )
+                    logger.debug("会話メモリに保存しました")
+                except Exception as e:
+                    logger.error(f"会話メモリへの保存に失敗しました: {e}")
             
             # ベクトルストアへの保存
-            if self.vector_store:
-                # メモリエントリの作成
-                memory_entry = {
-                    "timestamp": time.time(),
-                    "session_id": self.session_id,
-                    "input": input_data,
-                    "result": result
-                }
-                
-                # ドキュメントの作成
-                doc = Document(
-                    page_content=json.dumps(memory_entry, ensure_ascii=False),
-                    metadata={
-                        "timestamp": memory_entry["timestamp"],
-                        "session_id": memory_entry["session_id"],
-                        "action_type": result.get("action", {}).get("type", "unknown")
+            if self.vector_store and VECTORSTORE_AVAILABLE:
+                try:
+                    # メモリエントリの作成
+                    memory_entry = {
+                        "timestamp": time.time(),
+                        "session_id": self.session_id,
+                        "input": input_data,
+                        "result": result
                     }
-                )
-                
-                # ベクトルストアへの追加
-                self.vector_store.add_documents([doc])
-                
-                # 永続化（設定されている場合）
-                if hasattr(self.vector_store, "persist"):
-                    self.vector_store.persist()
+                    
+                    # Documentクラスが利用可能かチェック
+                    try:
+                        from langchain.schema import Document
+                        
+                        # ドキュメントの作成
+                        doc = Document(
+                            page_content=json.dumps(memory_entry, ensure_ascii=False),
+                            metadata={
+                                "timestamp": memory_entry["timestamp"],
+                                "session_id": memory_entry["session_id"],
+                                "action_type": result.get("action", {}).get("type", "unknown")
+                            }
+                        )
+                        
+                        # ベクトルストアへの追加
+                        self.vector_store.add_documents([doc])
+                        
+                        # 永続化（設定されている場合）
+                        if hasattr(self.vector_store, "persist"):
+                            self.vector_store.persist()
+                            
+                        logger.debug("ベクトルストアに保存しました")
+                    except (ImportError, TypeError) as e:
+                        logger.error(f"Documentクラスのインポートに失敗しました: {e}")
+                except Exception as e:
+                    logger.error(f"ベクトルストアへの保存に失敗しました: {e}")
             
         except Exception as e:
             logger.error(f"メモリへの保存に失敗しました: {e}")
+            logger.debug(f"保存に失敗したデータ: {str(input_data)[:100]}... / {str(result)[:100]}...")
     
     def _mock_response(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
         """

@@ -6,7 +6,11 @@ import os
 import sys
 import warnings
 import importlib.metadata
+import logging
 from typing import Dict, Tuple, TypeAlias, Any, List, Optional, Union, Literal
+
+# ロガーの設定
+logger = logging.getLogger(__name__)
 
 # Python バージョンチェック
 if not (sys.version_info.major == 3 and sys.version_info.minor >= 12):
@@ -27,8 +31,28 @@ NeurotransmitterLevels: TypeAlias = Dict[str, float]
 SensorData: TypeAlias = Dict[str, Any]
 LLMProvider: TypeAlias = Literal["openai", "claude", "gemini", "vertex", "local"]
 
-# コア機能のインポート
-from explainable_robotics.core.integrated_system import create_integrated_system, IntegratedSystem
+# 利用可能なコンポーネントのフラグ
+INTEGRATED_SYSTEM_AVAILABLE = False
+BIOKAN_AVAILABLE = False
+GENESIS_AVAILABLE = False
+MULTI_LLM_AVAILABLE = False
+
+# コア機能のインポート - 安全に行う
+try:
+    from explainable_robotics.core.integrated_system import create_integrated_system, IntegratedSystem
+    INTEGRATED_SYSTEM_AVAILABLE = True
+except (ImportError, TypeError) as e:
+    logger.warning(f"統合システムをインポートできません: {e}")
+    # ダミークラスとファクトリ関数を提供
+    class IntegratedSystem:
+        """統合システムのダミー実装"""
+        def __init__(self, *args, **kwargs):
+            logger.warning("統合システムはインポートできないため、ダミー実装を使用しています")
+            
+    def create_integrated_system(*args, **kwargs):
+        """統合システム作成のダミー関数"""
+        logger.warning("統合システムはインポートできないため、ダミー実装を使用しています")
+        return IntegratedSystem()
 
 # バージョン情報
 VERSION_INFO = {
@@ -47,26 +71,61 @@ def get_version_info() -> Dict[str, Any]:
     """バージョン情報を辞書として返す"""
     return VERSION_INFO.copy()
 
-# サブパッケージのインポート
+# サブパッケージを個別に安全にインポート
+# corticalモジュール
 try:
     from . import cortical
-    from . import core
-    from . import visualization
-    from . import controller
-    from . import utils
-    from . import demos
-
-    # 便利な関数のエクスポート
-    from .cortical import BioKAN
-    from .core import multi_llm_agent
-    from .core.multi_llm_agent import MultiLLMAgent
-    from .visualization import GenesisVisualizer
-    from .controller import RobotController
+    try:
+        from .cortical import BioKAN
+        BIOKAN_AVAILABLE = True
+    except (ImportError, TypeError) as e:
+        logger.warning(f"BioKANをインポートできません: {e}")
 except ImportError as e:
-    warnings.warn(
-        f"モジュールのインポートエラー: {e}。一部の機能が利用できない可能性があります。",
-        ImportWarning
-    )
+    logger.warning(f"corticalモジュールをインポートできません: {e}")
+
+# coreモジュール
+try:
+    from . import core
+    try:
+        from .core.multi_llm_agent import MultiLLMAgent
+        MULTI_LLM_AVAILABLE = True
+    except (ImportError, TypeError) as e:
+        logger.warning(f"MultiLLMAgentをインポートできません: {e}")
+except ImportError as e:
+    logger.warning(f"coreモジュールをインポートできません: {e}")
+
+# visualizationモジュール
+try:
+    from . import visualization
+    try:
+        from .visualization import GenesisVisualizer
+    except (ImportError, TypeError) as e:
+        logger.warning(f"GenesisVisualizerをインポートできません: {e}")
+except ImportError as e:
+    logger.warning(f"visualizationモジュールをインポートできません: {e}")
+
+# その他のモジュール
+utils_module = controller_module = demos_module = None
+try:
+    from . import utils
+    utils_module = utils
+except ImportError as e:
+    logger.warning(f"utilsモジュールをインポートできません: {e}")
+
+try:
+    from . import controller
+    try:
+        from .controller import RobotController
+    except (ImportError, TypeError) as e:
+        logger.warning(f"RobotControllerをインポートできません: {e}")
+except ImportError as e:
+    logger.warning(f"controllerモジュールをインポートできません: {e}")
+
+try:
+    from . import demos
+    demos_module = demos
+except ImportError as e:
+    logger.warning(f"demosモジュールをインポートできません: {e}")
 
 # セットアップが完了しているかどうかを確認
 _SETUP_DONE = False

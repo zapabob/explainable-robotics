@@ -9,7 +9,7 @@ import json
 GENESIS_AVAILABLE = False
 try:
     import genesis as gs
-    # クラス参照
+    # クラス参照を確認
     if hasattr(gs, 'humanoid') and hasattr(gs.humanoid, 'HumanoidRobot'):
         HumanoidRobot = gs.humanoid.HumanoidRobot
         GENESIS_AVAILABLE = True
@@ -19,7 +19,7 @@ try:
             def __init__(self, *args, **kwargs):
                 pass
 except ImportError:
-    # ダミークラス
+    # インポートできない場合はダミークラス
     class HumanoidRobot:
         def __init__(self, *args, **kwargs):
             pass
@@ -29,12 +29,19 @@ logger = logging.getLogger(__name__)
 class GenesisRobotInterface:
     """
     Genesisヒューマノイドロボットライブラリとの統合インターフェース。
+    
     皮質モデルからの出力をロボットの物理的動作に変換し、
     センサーデータを皮質モデルへの入力に変換します。
     """
     
     def __init__(self, config_path: Optional[str] = None):
-        # ロボット設定
+        """
+        GenesisRobotInterfaceを初期化
+        
+        Args:
+            config_path: 設定ファイルのパス
+        """
+        # ロボット設定のデフォルト値
         self.config = {
             'robot_model': 'humanoid_standard',
             'connection': {
@@ -55,42 +62,52 @@ class GenesisRobotInterface:
                 'legs': ['hip_yaw_l', 'hip_roll_l', 'hip_pitch_l', 'knee_l', 'ankle_pitch_l', 'ankle_roll_l',
                          'hip_yaw_r', 'hip_roll_r', 'hip_pitch_r', 'knee_r', 'ankle_pitch_r', 'ankle_roll_r']
             },
-            'control': {
-                'rate': 50,  # Hz
-                'safety_limits': True,
-                'motion_smoothing': True
+            'simulation': {
+                'enabled': True,
+                'physics_timestep': 0.01,
+                'sensor_noise': 0.02,
+                'motor_noise': 0.01
+            },
+            'preferences': {
+                'auto_stabilize': True,
+                'fall_protection': True,
+                'temperature_monitoring': True
             }
         }
         
-        # 設定ファイルからのロード
-        if config_path and os.path.exists(config_path):
-            try:
-                with open(config_path, 'r', encoding='utf-8') as f:
-                    loaded_config = json.load(f)
-                    # マージ
-                    self._merge_config(loaded_config)
-            except Exception as e:
-                logger.error(f"ロボット設定ファイルの読み込みに失敗しました: {str(e)}")
-                
-        # Genesisライブラリが利用可能かチェック
+        # 設定ファイルが指定されている場合は読み込み
+        if config_path:
+            self._load_config(config_path)
+        
+        # ロボットとシミュレーションの初期化
         self.robot = None
-        self.sensors = {}
-        self.motors = {}
+        self.simulation_env = None
+        self._control_thread = None
+        self._running = False
+        self._control_rate = 0.01  # 100Hz
         
-        if GENESIS_AVAILABLE:
-            self._initialize_robot()
-        else:
-            logger.warning("Genesisライブラリが見つかりません。シミュレーションモードで動作します。")
-            self._initialize_simulation()
-            
-        # 最後のセンサー値とモーター出力を保存
-        self.last_sensor_data = {}
-        self.last_motor_commands = {}
+        # 利用可能なジェスチャーのマッピング
+        self._gestures = {
+            'wave': self._gesture_wave,
+            'bow': self._gesture_bow,
+            'nod': self._gesture_nod,
+            'shake_head': self._gesture_shake_head,
+            'point': self._gesture_point,
+            'hands_up': self._gesture_hands_up
+        }
         
-        # コントロールループ用の変数
-        self.is_running = False
-        self.control_callback = None
-        
+        logger.info("GenesisRobotInterfaceを初期化しました")
+
+    def _load_config(self, config_path: str) -> None:
+        """設定を再帰的にマージします"""
+        try:
+            with open(config_path, 'r', encoding='utf-8') as f:
+                loaded_config = json.load(f)
+                # マージ
+                self._merge_config(loaded_config)
+        except Exception as e:
+            logger.error(f"ロボット設定ファイルの読み込みに失敗しました: {str(e)}")
+
     def _merge_config(self, new_config: Dict) -> None:
         """設定を再帰的にマージします"""
         for key, value in new_config.items():
@@ -99,7 +116,7 @@ class GenesisRobotInterface:
                     self._merge_config(value)
                 else:
                     self.config[key] = value
-                    
+
     def _initialize_robot(self) -> None:
         """実際のロボットハードウェアとの接続を初期化します"""
         try:
@@ -461,19 +478,19 @@ class GenesisRobotInterface:
         Args:
             control_callback: センサーデータを引数に取り、モーターコマンドを返す関数
         """
-        if self.is_running:
+        if self._running:
             logger.warning("制御ループはすでに実行中です")
             return
             
-        self.is_running = True
-        self.control_callback = control_callback
+        self._running = True
+        self._control_callback = control_callback
         
         try:
             logger.info("制御ループを開始します")
             control_rate = self.config['control']['rate']
             period = 1.0 / control_rate
             
-            while self.is_running:
+            while self._running:
                 loop_start = time.time()
                 
                 # センサーデータを読み取り
@@ -499,12 +516,12 @@ class GenesisRobotInterface:
         except Exception as e:
             logger.error(f"制御ループでエラーが発生しました: {str(e)}")
         finally:
-            self.is_running = False
+            self._running = False
             logger.info("制御ループを終了しました")
             
     def stop_control_loop(self) -> None:
         """制御ループを停止します"""
-        self.is_running = False
+        self._running = False
         logger.info("制御ループを停止します")
         
     def execute_gesture(self, gesture_name: str) -> bool:
@@ -517,20 +534,10 @@ class GenesisRobotInterface:
         Returns:
             ジェスチャーの実行が成功したかどうか
         """
-        # 基本的なジェスチャーのマッピング
-        gestures = {
-            'wave': self._gesture_wave,
-            'bow': self._gesture_bow,
-            'nod': self._gesture_nod,
-            'shake_head': self._gesture_shake_head,
-            'point': self._gesture_point,
-            'hands_up': self._gesture_hands_up
-        }
-        
-        if gesture_name in gestures:
+        if gesture_name in self._gestures:
             try:
                 logger.info(f"ジェスチャー '{gesture_name}' を実行します")
-                gestures[gesture_name]()
+                self._gestures[gesture_name]()
                 return True
             except Exception as e:
                 logger.error(f"ジェスチャー '{gesture_name}' の実行中にエラーが発生しました: {str(e)}")
@@ -672,7 +679,7 @@ class GenesisRobotInterface:
         """ロボットを安全にシャットダウンします"""
         try:
             # 制御ループが実行中なら停止
-            if self.is_running:
+            if self._running:
                 self.stop_control_loop()
                 
             # モーターを安全な位置に
@@ -697,12 +704,12 @@ class GenesisRobotInterface:
 
 def create_robot_interface(config_path: Optional[str] = None) -> GenesisRobotInterface:
     """
-    ロボットインターフェースのインスタンスを作成するファクトリ関数
+    GenesisRobotInterfaceのインスタンスを作成
     
     Args:
-        config_path: 設定ファイルへのパス（オプション）
+        config_path: 設定ファイルのパス
         
     Returns:
-        初期化されたGenesisRobotInterfaceインスタンス
+        GenesisRobotInterfaceのインスタンス
     """
     return GenesisRobotInterface(config_path) 

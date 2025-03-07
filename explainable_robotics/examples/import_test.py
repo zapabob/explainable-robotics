@@ -3,6 +3,7 @@
 
 """
 genesisのインポートテストスクリプト
+
 explainable-roboticsパッケージが正しく設定されていることを確認するためのテスト
 """
 
@@ -13,7 +14,7 @@ import os
 print("Genesisインポートテスト:")
 print("="*50)
 
-# 1. まずpythonのバージョンを確認
+# 1. まずPythonのバージョンを確認
 print(f"Python バージョン: {sys.version}")
 
 # 2. 直接genesisをインポート

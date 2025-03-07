@@ -29,6 +29,7 @@ except ImportError:
 # モックモードでのダミークラス
 if not GENESIS_AVAILABLE:
     class DummyScene:
+        """シーンのダミークラス"""
         def __init__(self):
             pass
         def set_window_size(self, *args):
@@ -48,10 +49,9 @@ if not GENESIS_AVAILABLE:
         def stop(self):
             print("モックシーンを停止")
     
-    # 他のダミークラスも同様に定義
-    
-    # gsがない場合にダミー値を設定
+    # ダミーモジュール
     class DummyModule:
+        """すべての属性アクセスに対してダミーオブジェクトを返すモジュール"""
         def __getattr__(self, name):
             return DummyScene()
     
@@ -80,7 +80,7 @@ class GenesisVisualizer:
             height: ウィンドウ高さ
             show_ui: UIを表示するかどうか
             physics_enabled: 物理シミュレーションを有効にするかどうか
-            camera_view: カメラビューモード ('follow', 'fixed', 'first_person')
+            camera_view: カメラビューモード（'follow', 'fixed', 'first_person'）
         """
         self.model_path = model_path
         self.window_title = window_title

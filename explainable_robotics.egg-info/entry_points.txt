@@ -1,0 +1,2 @@
+[console_scripts]
+explainable-robotics = explainable_robotics.main:main
