@@ -1,15 +1,29 @@
 import os
 from setuptools import setup, find_packages
 
-with open("README.md", "r", encoding="utf-8") as fh:
-    long_description = fh.read()
+# READMEファイルを読み込まずに直接説明文を指定
+long_description = """# Explainable Robotics
+
+神経科学的に妥当なヒューマノイドロボット制御のための説明可能AIフレームワーク
+
+## 概要
+
+Explainable Roboticsは、ヒューマノイドロボットの制御において、AIの意思決定プロセスを説明可能にするためのフレームワークです。
+神経科学の知見を活かし、人間の認知プロセスに近い形でロボットの動作を制御・理解することができます。
+
+## インストール
+
+```bash
+pip install explainable-robotics
+```
+"""
 
 setup(
     name="explainable-robotics",
     version="0.1.0",
     author="Ryo Minegishi",
-    author_email="info@explainable-robotics.com",
-    description="神経科学的に妥当なヒューマノイドロボット制御のための説明可能AIフレームワーク",
+    author_email="info@explainable-robotics.com", 
+    description="数理的に妥当なヒューマノイドロボット制御のための説明可能AIフレームワーク",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/zapabob/explainable_robotics",
@@ -20,7 +34,7 @@ setup(
         "Intended Audience :: Science/Research",
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.12",
-        "License :: OSI Approved :: MIT License",
+        "License :: OSI Approved :: MIT License", 
         "Operating System :: OS Independent",
         "Topic :: Scientific/Engineering :: Artificial Intelligence",
         "Topic :: Scientific/Engineering :: Bio-Informatics",
@@ -29,7 +43,7 @@ setup(
     python_requires=">=3.12",
     install_requires=[
         "numpy>=1.24.0",
-        "matplotlib>=3.7.0",
+        "matplotlib>=3.7.0", 
         "torch>=2.0.0",
         "langchain>=0.0.267",
         "langchain-openai>=0.0.2",
@@ -47,14 +61,13 @@ setup(
         "requests>=2.30.0",
         "tqdm>=4.65.0",
         "typing-extensions>=4.5.0",
-        "genesis-world>=0.5.0",  # Genesis ロボットシミュレーション
-        "biokan>=0.1.0",  # 生物学的知識グラフデータベース
+        "genesis-world>=0.1.0"
     ],
     extras_require={
         "dev": [
             "pytest>=7.0.0",
             "black>=23.0.0",
-            "flake8>=6.0.0",
+            "flake8>=6.0.0", 
             "isort>=5.12.0",
             "mypy>=1.0.0",
             "sphinx>=6.0.0",
@@ -74,4 +87,4 @@ setup(
             "explainable-robotics=explainable_robotics.main:main",
         ],
     }
-) 
+)
