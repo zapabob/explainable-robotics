@@ -10,7 +10,7 @@ import threading
 import queue
 import json
 from typing import Dict, Any, Optional, List, Tuple, Union, Callable
-
+import logging
 import torch
 import numpy as np
 
@@ -20,6 +20,9 @@ from ..cortical.biokan import BioKAN
 # ユーティリティのインポート
 from ..utils.logging import get_logger
 
+# ロガーの設定
+logger = get_logger(__name__)
+
 # GeminiAgentのインポートを削除し、MultiLLMAgentをインポート
 try:
     from explainable_robotics.core.multi_llm_agent import MultiLLMAgent
@@ -28,8 +31,8 @@ except ImportError:
     logger.warning("MultiLLMAgentをインポートできませんでした。AI機能が制限されます。")
     HAVE_LLM_AGENT = False
 
-# ロガーの設定
-logger = get_logger(__name__)
+# ビジュアライザーのインポート
+from ..visualization.genesis_visualizer import GenesisVisualizer
 
 
 class RobotController:
