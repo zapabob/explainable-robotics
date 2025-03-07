@@ -2,10 +2,196 @@
 Genesisライブラリのモック実装
 
 実際のGenesisライブラリがインストールされていない場合に使用されます。
+`import genesis as gs`と互換性のある形式で提供されます。
 """
 
 import numpy as np
 from typing import Dict, Any, List, Optional, Tuple
+import sys
+import types
+
+class Scene:
+    """シーンのモッククラス"""
+    
+    def __init__(self):
+        self.models = []
+        self.window_width = 800
+        self.window_height = 600
+        self.window_title = "Mock Genesis Scene"
+        self.camera = None
+        self.physics = None
+        self.ui = None
+    
+    def set_window_size(self, width, height):
+        """ウィンドウサイズの設定"""
+        self.window_width = width
+        self.window_height = height
+    
+    def set_window_title(self, title):
+        """ウィンドウタイトルの設定"""
+        self.window_title = title
+    
+    def add_model(self, model):
+        """モデルの追加"""
+        self.models.append(model)
+    
+    def set_camera(self, camera):
+        """カメラの設定"""
+        self.camera = camera
+    
+    def set_physics(self, physics):
+        """物理エンジンの設定"""
+        self.physics = physics
+    
+    def set_ui(self, ui):
+        """UIの設定"""
+        self.ui = ui
+    
+    def start(self):
+        """シーンの開始"""
+        print(f"モックシーンを開始: {self.window_title} ({self.window_width}x{self.window_height})")
+    
+    def stop(self):
+        """シーンの停止"""
+        print("モックシーンを停止")
+
+class Camera:
+    """カメラのモッククラス"""
+    
+    def __init__(self):
+        self.position = [0, 0, 5]
+        self.target = [0, 0, 0]
+        self.up = [0, 1, 0]
+        self.fov = 45.0
+        self.mode = "fixed"
+    
+    def set_position(self, position):
+        """位置の設定"""
+        self.position = position
+    
+    def set_target(self, target):
+        """注視点の設定"""
+        self.target = target
+    
+    def set_up(self, up):
+        """上方向の設定"""
+        self.up = up
+    
+    def set_fov(self, fov):
+        """視野角の設定"""
+        self.fov = fov
+    
+    def set_follow_mode(self, target, distance, up):
+        """追従モードの設定"""
+        self.mode = "follow"
+        self.target = target
+        self.distance = distance
+        self.up = up
+    
+    def set_first_person_mode(self, position, forward, up):
+        """一人称モードの設定"""
+        self.mode = "first_person"
+        self.position = position
+        self.forward = forward
+        self.up = up
+
+class Model:
+    """モデルのモッククラス"""
+    
+    def __init__(self):
+        self.position = [0, 0, 0]
+        self.rotation = [0, 0, 0]
+        self.joints = 20
+    
+    def set_position(self, position):
+        """位置の設定"""
+        self.position = position
+    
+    def set_rotation(self, rotation):
+        """回転の設定"""
+        self.rotation = rotation
+    
+    def set_joint_angle(self, index, angle):
+        """関節角度の設定"""
+        pass
+    
+    def get_joint_count(self):
+        """関節数の取得"""
+        return self.joints
+    
+    @classmethod
+    def from_urdf(cls, path):
+        """URDFからモデルを作成"""
+        print(f"URDFからモデルを作成: {path}")
+        return cls()
+    
+    @classmethod
+    def create_humanoid(cls):
+        """ヒューマノイドモデルを作成"""
+        print("ヒューマノイドモデルを作成")
+        return cls()
+
+class UI:
+    """UIのモッククラス"""
+    
+    def __init__(self):
+        self.panels = {}
+        self.elements = {}
+    
+    def add_panel(self, title, position, size):
+        """パネルの追加"""
+        self.panels[title] = {"position": position, "size": size, "elements": []}
+    
+    def add_gauge(self, panel, title, min_value, max_value, initial_value):
+        """ゲージの追加"""
+        if panel in self.panels:
+            element_id = f"{panel}_{title}"
+            self.elements[element_id] = {"type": "gauge", "value": initial_value}
+    
+    def add_text(self, panel, title, text):
+        """テキストの追加"""
+        if panel in self.panels:
+            element_id = f"{panel}_{title}"
+            self.elements[element_id] = {"type": "text", "value": text}
+    
+    def add_button(self, panel, title, callback):
+        """ボタンの追加"""
+        if panel in self.panels:
+            element_id = f"{panel}_{title}"
+            self.elements[element_id] = {"type": "button", "callback": callback}
+    
+    def add_checkbox(self, panel, title, checked, callback):
+        """チェックボックスの追加"""
+        if panel in self.panels:
+            element_id = f"{panel}_{title}"
+            self.elements[element_id] = {"type": "checkbox", "value": checked, "callback": callback}
+    
+    def update_gauge(self, panel, title, value):
+        """ゲージの更新"""
+        element_id = f"{panel}_{title}"
+        if element_id in self.elements:
+            self.elements[element_id]["value"] = value
+    
+    def update_text(self, panel, title, text):
+        """テキストの更新"""
+        element_id = f"{panel}_{title}"
+        if element_id in self.elements:
+            self.elements[element_id]["value"] = text
+
+class Physics:
+    """物理エンジンのモッククラス"""
+    
+    def __init__(self):
+        self.gravity = [0, -9.81, 0]
+        self.time_step = 0.01
+    
+    def set_gravity(self, gravity):
+        """重力の設定"""
+        self.gravity = gravity
+    
+    def step(self, dt):
+        """物理シミュレーションの1ステップ"""
+        pass
 
 class Environment:
     """環境のモッククラス"""
@@ -95,7 +281,6 @@ class Viewer:
         """ビューワーを閉じる"""
         pass
 
-# その他の必要なクラス
 class NeurotransmitterSystem:
     """神経伝達物質システムのモッククラス"""
     
@@ -118,8 +303,49 @@ class NeurotransmitterSystem:
         """神経伝達物質レベルの取得"""
         return self.levels.get(transmitter_type, 0.5)
 
-# モジュールエクスポート
+# ===== モジュール構造を正しく設定 =====
+
+# まず、gsとgensis両方のモジュールを作成
+gs = types.ModuleType('genesis')
+sys.modules['genesis'] = gs
+
+# サブモジュールの作成
+humanoid = types.ModuleType('genesis.humanoid')
+sensors = types.ModuleType('genesis.sensors')
+motors = types.ModuleType('genesis.motors')
+kinematics = types.ModuleType('genesis.kinematics')
+
+# サブモジュールをgsに登録
+gs.humanoid = humanoid
+gs.sensors = sensors
+gs.motors = motors
+gs.kinematics = kinematics
+
+# トップレベルクラスをgsに追加
+gs.Scene = Scene
+gs.Camera = Camera
+gs.Model = Model
+gs.UI = UI
+gs.Physics = Physics
+gs.Environment = Environment
+
+# クラスをサブモジュールに登録
+humanoid.HumanoidRobot = HumanoidRobot
+
+# センサー類
+sensors.Camera = type('Camera', (), {})
+sensors.IMU = type('IMU', (), {})
+sensors.JointSensor = type('JointSensor', (), {})
+sensors.ForceSensor = type('ForceSensor', (), {})
+
+# モーター類
+motors.ServoMotor = type('ServoMotor', (), {})
+
+# キネマティクス
+kinematics.InverseKinematics = type('InverseKinematics', (), {})
+
+# 後方互換性のためのエクスポート
 visualization = type('', (), {'Viewer': Viewer})()
 robot = type('', (), {'HumanoidRobot': HumanoidRobot})()
-motor = type('', (), {})()  # 空のモジュール
+motor = type('', (), {})()
 neurotransmitters = type('', (), {'NeurotransmitterSystem': NeurotransmitterSystem})() 

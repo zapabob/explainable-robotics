@@ -1,22 +1,47 @@
 """
-Genesis模擬ライブラリ
+Genesisライブラリとの統合モジュール。
 
-ヒューマノイドロボットのシミュレーションと可視化のためのライブラリです。
+実際のGenesisライブラリがインストールされていない場合は、
+モック実装が自動的に使用されます。
 """
 
-# 実際のGensisライブラリが存在するか確認
+# genesisモジュールをインポートまたはモック化
+GENESIS_AVAILABLE = False
+
+# ダミーモジュールのベースクラス
+class DummyModule:
+    def __getattr__(self, name):
+        return DummyModule()
+    
+    def __call__(self, *args, **kwargs):
+        return self
+
 try:
-    import genesis as real_genesis
-    # 実際のライブラリが存在する場合は、それをそのまま使用
-    from genesis import *
-    USING_REAL_GENESIS = True
-    
+    # 実際のgenesisライブラリを試みる
+    import genesis as gs
+    if hasattr(gs, 'humanoid'):
+        GENESIS_AVAILABLE = True
+    else:
+        # 構造が不完全な場合
+        gs = DummyModule()
+        print("WARNING: Genesisライブラリ構造が不完全です。モック実装を使用します。")
 except ImportError:
-    # 実際のライブラリがない場合は、モックを使用
-    from .mock_genesis import *
-    from .mock_genesis import Environment, HumanoidRobot, Viewer, NeurotransmitterSystem
-    USING_REAL_GENESIS = False
-    
-    # 名前空間にクラスを追加
-    __all__ = ['Environment', 'HumanoidRobot', 'Viewer', 'NeurotransmitterSystem',
-               'visualization', 'robot', 'motor', 'neurotransmitters'] 
+    # モジュールが見つからない場合
+    gs = DummyModule()
+    print("WARNING: Genesisライブラリが見つかりません。モック実装を使用します。")
+
+# 便利なクラスを直接エクスポート
+from . import robot_interface
+from .robot_interface import (
+    GenesisRobotInterface,
+    create_robot_interface
+)
+
+# 必要なクラスや関数をエクスポート
+__all__ = [
+    'GenesisRobotInterface',
+    'create_robot_interface',
+    'GENESIS_AVAILABLE',
+    'gs',  # genesis as gsの形式でインポートするためにモジュール自体をエクスポート
+    'robot_interface'
+] 

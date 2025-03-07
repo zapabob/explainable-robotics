@@ -5,17 +5,21 @@ from typing import Dict, List, Optional, Union, Any, Tuple, Callable
 import numpy as np
 import json
 
-# Genesis APIをインポート（実際の環境に合わせて調整が必要）
+# Genesis APIをインポート
+GENESIS_AVAILABLE = False
 try:
-    import genesis
-    from genesis.humanoid import HumanoidRobot
-    from genesis.sensors import Camera, IMU, JointSensor, ForceSensor
-    from genesis.motors import ServoMotor
-    from genesis.kinematics import InverseKinematics
-    GENESIS_AVAILABLE = True
+    import genesis as gs
+    # クラス参照
+    if hasattr(gs, 'humanoid') and hasattr(gs.humanoid, 'HumanoidRobot'):
+        HumanoidRobot = gs.humanoid.HumanoidRobot
+        GENESIS_AVAILABLE = True
+    else:
+        # 属性がない場合はダミークラスを使用
+        class HumanoidRobot:
+            def __init__(self, *args, **kwargs):
+                pass
 except ImportError:
-    GENESIS_AVAILABLE = False
-    # モックオブジェクトとしてのダミークラス
+    # ダミークラス
     class HumanoidRobot:
         def __init__(self, *args, **kwargs):
             pass

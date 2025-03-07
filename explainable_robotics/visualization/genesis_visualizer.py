@@ -13,14 +13,49 @@ from typing import Dict, Any, Optional, List, Tuple, Union
 import numpy as np
 
 # 物理エンジンとしてgenesisを使用
+GENESIS_AVAILABLE = False
 try:
-    import genesis
-    from genesis import Scene, Camera, Model, UI, Physics
-    GENESIS_AVAILABLE = True
+    import genesis as gs
+    # クラスの存在を確認
+    if (hasattr(gs, 'humanoid') and hasattr(gs, 'Scene') and
+        hasattr(gs, 'Camera') and hasattr(gs, 'Model') and
+        hasattr(gs, 'UI') and hasattr(gs, 'Physics')):
+        GENESIS_AVAILABLE = True
+    else:
+        print("WARNING: Genesisライブラリ構造が不完全です。モックモードで実行します。")
 except ImportError:
-    GENESIS_AVAILABLE = False
     print("WARNING: Genesisライブラリが利用できません。モックモードで実行します。")
 
+# モックモードでのダミークラス
+if not GENESIS_AVAILABLE:
+    class DummyScene:
+        def __init__(self):
+            pass
+        def set_window_size(self, *args):
+            pass
+        def set_window_title(self, *args):
+            pass
+        def add_model(self, *args):
+            pass
+        def set_camera(self, *args):
+            pass
+        def set_physics(self, *args):
+            pass
+        def set_ui(self, *args):
+            pass
+        def start(self):
+            print("モックシーンを開始")
+        def stop(self):
+            print("モックシーンを停止")
+    
+    # 他のダミークラスも同様に定義
+    
+    # gsがない場合にダミー値を設定
+    class DummyModule:
+        def __getattr__(self, name):
+            return DummyScene()
+    
+    gs = DummyModule()
 
 class GenesisVisualizer:
     """Genesisを使用したヒューマノイドロボットと脳状態の可視化"""
@@ -111,7 +146,7 @@ class GenesisVisualizer:
             return
         
         # シーンの初期化
-        self.scene = Scene()
+        self.scene = gs.Scene()
         self.scene.set_window_size(self.width, self.height)
         self.scene.set_window_title(self.window_title)
         
@@ -120,16 +155,16 @@ class GenesisVisualizer:
         
         # モデルの読み込み
         if self.model_path and os.path.exists(self.model_path):
-            self.model = Model.from_urdf(self.model_path)
+            self.model = gs.Model.from_urdf(self.model_path)
             self.scene.add_model(self.model)
         else:
             # デフォルトのヒューマノイドモデル
-            self.model = Model.create_humanoid()
+            self.model = gs.Model.create_humanoid()
             self.scene.add_model(self.model)
         
         # 物理エンジンの初期化
         if self.physics_enabled:
-            self.physics = Physics()
+            self.physics = gs.Physics()
             self.physics.set_gravity([0, -9.81, 0])
             self.scene.set_physics(self.physics)
         
@@ -212,7 +247,7 @@ class GenesisVisualizer:
         if not GENESIS_AVAILABLE or not self.scene:
             return
         
-        camera = Camera()
+        camera = gs.Camera()
         settings = self.camera_settings[self.camera_view]
         
         if self.camera_view == 'follow':
@@ -240,7 +275,7 @@ class GenesisVisualizer:
         if not GENESIS_AVAILABLE or not self.scene:
             return
         
-        self.ui = UI()
+        self.ui = gs.UI()
         
         # 脳状態表示パネル
         self.ui.add_panel(
@@ -399,7 +434,7 @@ class GenesisVisualizer:
         if GENESIS_AVAILABLE and self.scene:
             if enabled:
                 if not self.physics:
-                    self.physics = Physics()
+                    self.physics = gs.Physics()
                     self.physics.set_gravity([0, -9.81, 0])
                 self.scene.set_physics(self.physics)
             else:
