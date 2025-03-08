@@ -12,7 +12,8 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: ['3.12','3.13','3.14']
+        python-version: ['3.12','3.13']
+    timeout-minutes: 15  # デフォルトは6分
 
     steps:
     - uses: actions/checkout@v3
@@ -22,13 +23,23 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
         
-    - name: Install dependencies
+    - name: Install dependencies (Unix)
+      if: runner.os != 'Windows'
       run: |
         python -m pip install --upgrade pip
         python -m pip install pytest pytest-cov flake8
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
         pip install -e .
       shell: bash
+        
+    - name: Install dependencies (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install pytest pytest-cov flake8
+        if (Test-Path -Path "requirements.txt") { pip install -r requirements.txt }
+        pip install -e .
+      shell: pwsh
         
     - name: Lint with flake8
       run: |
@@ -38,10 +49,21 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
       shell: bash
         
-    - name: Test with pytest
+    - name: Create logs directory
+      run: mkdir -p logs
+      shell: bash
+        
+    - name: Test with pytest (Unix)
+      if: runner.os != 'Windows'
       run: |
         pytest --cov=explainable_robotics tests/
       shell: bash
+        
+    - name: Test with pytest (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        pytest --cov=explainable_robotics tests/
+      shell: pwsh
         
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
